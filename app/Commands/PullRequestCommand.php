@@ -111,7 +111,9 @@ class PullRequestCommand extends Command
             $activeCycle->name ?? 'Cycle' . $activeCycle->number
         ));
 
-        $issues = $activeCycle->issues;
+        $triageIssues = $this->linear()->issues()->triage();
+
+        $issues = $activeCycle->issues->merge($triageIssues);
         $states = $issues->groupBy('state');
 
         $states->each(
