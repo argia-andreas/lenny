@@ -15,6 +15,9 @@ class LinearIssue
         public ?string $description = '',
         public ?string $state = '',
         public ?Collection $labels = null,
+        public ?string $createdAt  = '',
+        public ?string $archivedAt = '',
+        public ?string $snoozedUntilAt = '',
     )
     {
         if(!$labels) {
@@ -31,6 +34,9 @@ class LinearIssue
             'number',
             'branchName',
             'description',
+            'createdAt',
+            'archivedAt',
+            'snoozedUntilAt',
         ])->toArray());
 
         $linearIssue->state = $data['state']['name'] ?? 'unknown';

@@ -80,12 +80,102 @@ class Issue extends AbstractLinear
 
     public function triage()
     {
+        $teamId = config('linear.settings.teamId');
+        $query = <<<GQL
+            query Team {
+                  team(id: "$teamId") {
+                    id
+                    name
+                    issues(
+                        filter: {
+                          state: { type: { eq: "triage" } }
+                          or: [
+                              { snoozedUntilAt: { lt: "P0D" } },
+                              { snoozedUntilAt: { null: true } }
+                            ]
+                        }
+                    ) {
+                      nodes {
+                        id
+                        identifier
+                        title
+                        branchName
+                        number
+                        description
+                        labels {
+                          nodes {
+                            id
+                            name
+                          }
+                        }
+                        state {
+                          id
+                          name
+                        }
+                        assignee {
+                          id
+                          name
+                        }
+                        createdAt
+                        archivedAt
+                        snoozedUntilAt
+                      }
+                    }
+                  }
+                }
+        GQL;
 
+        return $this->query($query)
+            ->pipe(fn($response) => collect(data_get($response, 'team.issues.nodes', [])))
+            ->map(fn($issue) => LinearIssue::fromRequest($issue));
     }
 
     public function backlog()
     {
+        $teamId = config('linear.settings.teamId');
+        $query = <<<GQL
+            query Team {
+                  team(id: "$teamId") {
+                    id
+                    name
+                    issues(
+                        filter: {
+                          state: { type: { eq: "backlog" } }
+                        }
+                    ) {
+                      nodes {
+                        id
+                        identifier
+                        title
+                        branchName
+                        number
+                        description
+                        labels {
+                          nodes {
+                            id
+                            name
+                          }
+                        }
+                        state {
+                          id
+                          name
+                        }
+                        assignee {
+                          id
+                          name
+                        }
+                        createdAt
+                        archivedAt
+                        snoozedUntilAt
+                      }
+                    }
+                  }
+                }
+        GQL;
 
+        return $this->query($query)
+            ->pipe(fn($response) => collect(data_get($response, 'team.issues.nodes', [])))
+            ->map(fn($issue) => LinearIssue::fromRequest($issue));
     }
 
     /**
@@ -163,6 +253,7 @@ class Issue extends AbstractLinear
                 }
                 createdAt
                 archivedAt
+                snoozedUntilAt
               }
             }
         GQL;
