@@ -40,6 +40,9 @@ class InstallCommand extends Command
         $this->token = $this->secret('Linear API Token:');
 
         $this->task('Saving Linear API token', [$this, 'saveLinearApiToken']);
+        $this->task('Publishing template stuv', [$this, 'publishTemplateStub']);
+
+        return 0;
     }
 
     public function saveLinearApiToken()
@@ -57,11 +60,16 @@ class InstallCommand extends Command
                 File::makeDirectory(base_dir());
             }
 
+            if (!File::isDirectory(base_dir() . 'cache/')) {
+                File::makeDirectory(base_dir() . 'cache/');
+            }
+
             // Auth.
             File::put($authFileName, $authData);
 
             // Settings
             File::put(base_dir() . "settings.json", json_encode([
+                'teamId' => null,
                 'pr' => [
                     'lastBoardId' => null,
                     'lastListId' => null,
@@ -81,5 +89,50 @@ class InstallCommand extends Command
             $this->error($e->getMessage());
             return false;
         }
+    }
+
+    public function publishTemplateStub()
+    {
+        $templateFile = base_dir() . 'changelog.blade.php';
+
+        $this->line('Saving template stub to: ' . $templateFile);
+
+        $template = <<<'EOT'
+        # :rocket: Sprint - {{ $cycleName }}
+        ---
+        Date: {{ $startsAt }} - {{ $endsAt }}
+        Progress: {{ $progress }}%
+        @if($highlights)
+        ---
+        ## Highlights
+        @foreach($highlights as $issue)
+        ### {{ $issue->title }}
+        {{ $issue->description }}
+        @endforeach
+        @endif
+        @if($features)
+        ---
+        ## Funktioner
+        @foreach($features as $issue)
+        - {{ $issue->title }}
+        @endforeach
+        @endif
+        @if($bugs)
+        ---
+        ## Buggar
+        @foreach($bugs as $issue)
+        - {{ $issue->title }}
+        @endforeach
+        @endif
+        @if($tasks)
+        ---
+        ## Övrigt
+        @foreach($tasks as $issue)
+        - {{ $issue->title }}
+        @endforeach
+        @endif
+        EOT;
+
+        File::put($templateFile, $template);
     }
 }

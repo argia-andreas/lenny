@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Formatters\Changelog;
+
 use App\Entities\LinearCycle;
 use App\Entities\LinearIssue;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
-use function collect;
 
 class MarkdownChangelogFormatter implements ChangelogFormatter
 {
@@ -17,52 +17,66 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
 
     public function format(LinearCycle $cycle): void
     {
-        $title = sprintf(
-            '# :rocket: Sprint - %s',
-            $cycle->name ?? 'Cycle ' . $cycle->number,
-        );
+        $output = view('changelog')
+            ->with('cycleName', $this->title($cycle))
+            ->with('startsAt', Carbon::parse($cycle->startsAt)->format('Y-m-d'))
+            ->with('endsAt', Carbon::parse($cycle->endsAt)->format('Y-m-d'))
+            ->with('progress', round($cycle->progress * 100, 0))
+            ->with('highlights', $this->highlights($cycle))
+            ->with('features', $this->features($cycle))
+            ->with('bugs', $this->bugs($cycle))
+            ->with('tasks', $this->tasks($cycle))
+            ->render();
 
-        $this->command->line($title);
-        $this->command->line("---");
-        $this->command->line(
-            sprintf(
-                'Date: %s - %s',
-                Carbon::parse($cycle->startsAt)->toDateString(),
-                        Carbon::parse($cycle->endsAt)->toDateString(),
-            ));
-        $this->command->line(sprintf('Progress: %d',$cycle->progress));
-        $this->command->newLine();
-        $this->command->line("---");
-        $this->command->newLine();
-        $this->command->line("## Highlights");
-        $this->highlights($cycle);
-        $this->command->newLine();
-        $this->command->line("---");
-        $this->command->newLine();
-        $this->command->line("## Tasks");
-        $this->tasks($cycle);
-        $this->command->newLine();
+        Str::of($output)
+            ->explode(PHP_EOL)
+            ->each(fn($line) => $this->command->line($line));
     }
 
-    public function highlights(LinearCycle $cycle)
+    public function title($cycle): string
     {
-        $cycle
-            ->issues
-            ->filter(fn (LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
-            ->each(function(LinearIssue $issue) {
-               $this->command->line(sprintf('### %s', $issue->title));
-               $description = Str::of($issue->description)->between('<highlight>', '</highlight>');
-                $this->command->line($description);
-            });
+        return $cycle->name ?? 'Cycle ' . $cycle->number;
     }
 
-    public function tasks(LinearCycle $cycle)
+    public function highlights($cycle): array
     {
-        $cycle
+        return $cycle
             ->issues
-            ->filter(fn (LinearIssue $issue) => ! $issue->labels->contains('name', 'highlight'))
-            ->filter(fn (LinearIssue $issue) => $issue->state == 'Done')
-            ->map(fn(LinearIssue $issue) => "- " . $issue->title)
-            ->each(fn(string $cardName) => $this->command->line($cardName));
+//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
+            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->toArray();
+    }
+
+    public function features($cycle): array
+    {
+        return $cycle
+            ->issues
+//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
+            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->toArray();
+    }
+
+    public function bugs($cycle): array
+    {
+        return $cycle
+            ->issues
+//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
+            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->toArray();
+    }
+
+    public function tasks($cycle): array
+    {
+        return $cycle
+            ->issues
+            ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
+            ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
+            ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
+            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->toArray();
     }
 }

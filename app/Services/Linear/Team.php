@@ -2,9 +2,8 @@
 
 namespace App\Services\Linear;
 
-use App\DataTransferObjects\NewLinearIssueDto;
-use App\Entities\LinearIssue;
 use App\Entities\LinearTeam;
+use GraphQL\QueryBuilder\QueryBuilder;
 use Illuminate\Support\Collection;
 
 class Team extends AbstractLinear
@@ -14,18 +13,14 @@ class Team extends AbstractLinear
      */
     public function all(): Collection
     {
-        $query = <<<GQL
-            query Teams {
-              teams {
-                nodes {
-                  id
-                  name
-                }
-              }
-            }
-        GQL;
+        $gqlBuilder = (new QueryBuilder('teams'))
+            ->selectField(
+                (new QueryBuilder('nodes'))
+                    ->selectField('id')
+                    ->selectField('name')
+            );
 
-        return $this->query($query)
+        return $this->query($gqlBuilder)
             ->pipe(fn($response) => collect(data_get($response, 'teams.nodes', [])))
             ->map(fn($team) => LinearTeam::fromRequest($team));
     }

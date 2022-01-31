@@ -2,8 +2,7 @@
 
 namespace App\Services\Linear;
 
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
+use GraphQL\Client;
 use UnhandledMatchError;
 
 /**
@@ -18,16 +17,14 @@ use UnhandledMatchError;
  * */
 class LinearApiGateway
 {
-    protected PendingRequest $client;
+    protected Client $client;
 
     public function __construct(protected string $token)
     {
-        $this->client = Http::baseUrl('https://api.linear.app/graphql')
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-                'Authorization' => $this->token,
-            ]);
+        $this->client = new Client(
+            'https://api.linear.app/graphql',
+            ['Authorization' => $this->token]
+        );
     }
 
     public function api($service): AbstractLinear
@@ -57,7 +54,7 @@ class LinearApiGateway
         }
     }
 
-    public function getClient(): PendingRequest
+    public function getClient(): Client
     {
         return $this->client;
     }

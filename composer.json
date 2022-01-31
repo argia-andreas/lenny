@@ -17,8 +17,10 @@
     ],
     "require": {
         "php": "^8.0",
+        "gmostafa/php-graphql-client": "^1.13",
         "guzzlehttp/guzzle": "^7.4",
         "illuminate/http": "^8.0",
+        "illuminate/view": "^8.0",
         "illuminate/log": "^8.0",
         "laminas/laminas-text": "^2.8",
         "laravel-zero/phar-updater": "^1.0.6",

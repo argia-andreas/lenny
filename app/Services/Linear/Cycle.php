@@ -2,9 +2,10 @@
 
 namespace App\Services\Linear;
 
-use App\DataTransferObjects\NewLinearIssueDto;
 use App\Entities\LinearCycle;
-use App\Entities\LinearIssue;
+use GraphQL\Query;
+use GraphQL\QueryBuilder\QueryBuilder;
+use GraphQL\RawObject;
 
 class Cycle extends AbstractLinear
 {
@@ -13,20 +14,17 @@ class Cycle extends AbstractLinear
     {
         $teamId = config('linear.settings.teamId');
 
-        $query = <<<GQL
-            query Team {
-                  team(id: "{$teamId}") {
-                    activeCycle {
-                        id
-                        name
-                        number
-                        {$this->getWith()}
-                    }
-                  }
-                }
-        GQL;
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField(
+                (new Query('activeCycle'))
+                    ->setSelectionSet([
+                        ...self::fields(),
+                        ...$this->getWith(),
+                    ])
+            );
 
-        return $this->query($query)
+        return $this->query($gql)
             ->pipe(fn($response) => LinearCycle::fromRequest(
                 data_get($response, 'team.activeCycle', [])
             ));
@@ -35,55 +33,51 @@ class Cycle extends AbstractLinear
     public function all()
     {
         $teamId = config('linear.settings.teamId');
-        $query = <<<GQL
-            query Team {
-                  team(id: "{$teamId}") {
-                    id
-                    name
-                    cycles(filter: {
-                        endsAt: { gt: "-P1M" }
-                      }) {
-                            nodes {
-                              id
-                              number
-                              name
-                              completedAt
-                              endsAt
-                              progress
-                              startsAt
-                            }
-                          }
-                  }
-                }
-        GQL;
 
-        return $this->query($query)
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField(
+                (new QueryBuilder('cycles'))
+                    ->setArgument('filter', new RawObject('{endsAt: { gt: "-P1M" }}'))
+                    ->selectField(
+                        (new Query('nodes'))
+                            ->setSelectionSet([
+                                ...self::fields(),
+                                ...$this->getWith(),
+                            ])
+                    )
+            );
+
+        return $this->query($gql)
             ->pipe(fn($result) => collect(data_get($result, 'team.cycles.nodes', [])))
             ->map(fn($cycle) => LinearCycle::fromRequest($cycle));
     }
 
     public function find($cycleId)
     {
-        $teamId = config('linear.settings.teamId');
-        $issues = Issue::fields();
+        $gql = (new Query('cycle'))
+            ->setArguments(['id' => $cycleId])
+            ->setSelectionSet([
+                ...self::fields(),
+                ...$this->getWith(),
+            ]);
 
-        $query = <<<GQL
-            query Cycles{
-                  cycle(id: "{$cycleId}") {
-                        id
-                        number
-                        name
-                        completedAt
-                        endsAt
-                        progress
-                        startsAt
-                        {$issues}
-                      }
-                }
-        GQL;
-
-        return $this->query($query)
+        return $this->query($gql)
             ->pipe(fn($response) => LinearCycle::fromRequest(data_get($response, 'cycle', [])));
     }
 
+    public static function fields(): array
+    {
+        return [
+            'id',
+            'number',
+            'name',
+            'completedAt',
+            'endsAt',
+            'progress',
+            'startsAt',
+        ];
+    }
 }

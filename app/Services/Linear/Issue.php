@@ -4,128 +4,90 @@ namespace App\Services\Linear;
 
 use App\DataTransferObjects\NewLinearIssueDto;
 use App\Entities\LinearIssue;
+use GraphQL\Mutation;
+use GraphQL\Query;
+use GraphQL\QueryBuilder\QueryBuilder;
+use GraphQL\RawObject;
 use Illuminate\Support\Collection;
 
 class Issue extends AbstractLinear
 {
     public function create(NewLinearIssueDto $issue): LinearIssue
     {
-        $mutation = <<<GQL
-            mutation IssueCreate {
-              issueCreate(
-                input: {
-                  title: "{$issue->title}"
-                  description: "{$issue->description}"
-                  teamId: "{$issue->teamId}"
-                }
-              ) {
-                success
-                issue {
-                  id
-                  identifier
-                  title
-                  branchName
-                  number
-                  description
-                }
-              }
-            }
-        GQL;
+        $mutation = (new Mutation('issueCreate'))
+            ->setArguments([
+                'input' => new RawObject('{
+                    title: "' . $issue->title . '",
+                    description: "' . $issue->description . '",
+                    teamId: "' . $issue->teamId . '"
+                }'),
+            ])
+            ->setSelectionSet([
+                'success',
+                (new Query('issue'))
+                    ->setSelectionSet(self::fields()),
+            ]);
 
         return $this->mutate($mutation)
             ->pipe(function ($issue) {
-                throw_unless($issue['issueCreate']['success'], \Exception::class, 'Issue not created');
-                return LinearIssue::fromRequest($issue['issueCreate']['issue']);
+                throw_unless($issue['issueCreate']->success, \Exception::class, 'Issue not created');
+                return LinearIssue::fromRequest($issue['issueCreate']->issue);
             });
     }
 
     public function find(string $identifier): LinearIssue
     {
-        $query = <<<GQL
-            query Issue {
-                  issue(id: "{$identifier}") {
-                    id
-                    identifier
-                    title
-                    branchName
-                    number
-                    description
-                  }
-                }
-        GQL;
+        $gql = (new Query('issue'))
+            ->setArguments(['id' => $identifier])
+            ->setSelectionSet(self::fields());
 
-        return $this->query($query)
+        return $this->query($gql)
             ->pipe(function ($response) {
-                return new LinearIssue(...$response['issue']);
+                return LinearIssue::fromRequest(data_get($response, 'issue'));
             });
     }
 
     public function all()
     {
         $teamId = config('linear.settings.teamId');
-        $fields = self::fields();
-        $query = <<<GQL
-            query Team {
-                  team(id: "{$teamId}") {
-                    id
-                    name
-                    {$fields}
-                  }
-                }
-        GQL;
+        $fields = self::relation();
 
-        return $this->query($query)
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField($fields);
+
+        return $this->query($gql)
             ->dd();
     }
 
     public function triage()
     {
         $teamId = config('linear.settings.teamId');
-        $query = <<<GQL
-            query Team {
-                  team(id: "$teamId") {
-                    id
-                    name
-                    issues(
-                        filter: {
+
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField(
+                (new Query('issues'))
+                    ->setArguments([
+                        'filter' => new RawObject('{
                           state: { type: { eq: "triage" } }
                           or: [
                               { snoozedUntilAt: { lt: "P0D" } },
                               { snoozedUntilAt: { null: true } }
                             ]
-                        }
-                    ) {
-                      nodes {
-                        id
-                        identifier
-                        title
-                        branchName
-                        number
-                        description
-                        labels {
-                          nodes {
-                            id
-                            name
-                          }
-                        }
-                        state {
-                          id
-                          name
-                        }
-                        assignee {
-                          id
-                          name
-                        }
-                        createdAt
-                        archivedAt
-                        snoozedUntilAt
-                      }
-                    }
-                  }
-                }
-        GQL;
+                        }'),
+                    ])
+                    ->setSelectionSet([
+                        (new Query('nodes'))
+                            ->setSelectionSet(self::fields()),
+                    ])
+            );
 
-        return $this->query($query)
+        return $this->query($gql)
             ->pipe(fn($response) => collect(data_get($response, 'team.issues.nodes', [])))
             ->map(fn($issue) => LinearIssue::fromRequest($issue));
     }
@@ -133,47 +95,25 @@ class Issue extends AbstractLinear
     public function backlog()
     {
         $teamId = config('linear.settings.teamId');
-        $query = <<<GQL
-            query Team {
-                  team(id: "$teamId") {
-                    id
-                    name
-                    issues(
-                        filter: {
-                          state: { type: { eq: "backlog" } }
-                        }
-                    ) {
-                      nodes {
-                        id
-                        identifier
-                        title
-                        branchName
-                        number
-                        description
-                        labels {
-                          nodes {
-                            id
-                            name
-                          }
-                        }
-                        state {
-                          id
-                          name
-                        }
-                        assignee {
-                          id
-                          name
-                        }
-                        createdAt
-                        archivedAt
-                        snoozedUntilAt
-                      }
-                    }
-                  }
-                }
-        GQL;
 
-        return $this->query($query)
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField(
+                (new Query('issues'))
+                    ->setArguments([
+                        'filter' => new RawObject('{
+                          state: { type: { eq: "backlog" } }
+                        }'),
+                    ])
+                    ->setSelectionSet([
+                        (new Query('nodes'))
+                            ->setSelectionSet(self::fields()),
+                    ])
+            );
+
+        return $this->query($gql)
             ->pipe(fn($response) => collect(data_get($response, 'team.issues.nodes', [])))
             ->map(fn($issue) => LinearIssue::fromRequest($issue));
     }
@@ -184,78 +124,78 @@ class Issue extends AbstractLinear
     public function activeCycle(): Collection
     {
         $teamId = config('linear.settings.teamId');
-        $fields = self::fields();
-        $query = <<<GQL
-            query Team {
-                  team(id: "{$teamId}") {
-                    id
-                    name
-                    activeCycle {
-                        id
-                        name
-                        number
-                        {$fields}
-                    }
-                  }
-                }
-        GQL;
 
-        return $this->query($query)
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField(
+                (new Query('activeCycle'))
+                    ->setSelectionSet([
+                        ...Cycle::fields(),
+                        self::relation(),
+                    ])
+            );
+
+        return $this->query($gql)
             ->pipe(fn($response) => collect(data_get($response, 'team.activeCycle.issues.nodes', [])))
             ->map(fn($issue) => LinearIssue::fromRequest($issue));
-
     }
 
     public function cycle(string $cycleId)
     {
-        $teamId = config('linear.settings.teamId');
-        $fields = self::fields();
-        $query = <<<GQL
-            query Cycles {
-                    cycle(id: "{$cycleId}") {
-                        id
-                        name
-                        number
-                        {$fields}
-                    }
-                }
-        GQL;
+        $gql = (new Query('cycle'))
+            ->setArguments(['id' => $cycleId])
+            ->setSelectionSet([
+                ...Cycle::fields(),
+                self::relation(),
+            ]);
 
-        return $this->query($query)
+        return $this->query($gql)
             ->pipe(fn($response) => collect(data_get($response, 'team.cycle.issues.nodes', [])))
             ->map(fn($issue) => LinearIssue::fromRequest($issue));
     }
 
-    public static function fields(): string
+    public static function fields(): array
     {
-        return <<<GQL
-            issues {
-              nodes {
-                id
-                identifier
-                title
-                branchName
-                number
-                description
-                labels {
-                  nodes {
-                    id
-                    name
-                  }
-                }
-                state {
-                  id
-                  name
-                }
-                assignee {
-                  id
-                  name
-                }
-                createdAt
-                archivedAt
-                snoozedUntilAt
-              }
-            }
-        GQL;
+        return [
+            'id',
+            'identifier',
+            'title',
+            'branchName',
+            'number',
+            'description',
+            'createdAt',
+            'archivedAt',
+            'snoozedUntilAt',
+            (new Query('assignee'))
+                ->setSelectionSet([
+                    'id',
+                    'name',
+                ]),
+            (new Query('state'))
+                ->setSelectionSet([
+                    'id',
+                    'name',
+                ]),
+            (new QueryBuilder('labels'))
+                ->selectField(
+                    (new Query('nodes'))
+                        ->setSelectionSet([
+                            'id',
+                            'name',
+                        ])
+                )->getQuery(),
+
+        ];
+    }
+
+    public static function relation(): Query|QueryBuilder
+    {
+        return (new QueryBuilder('issues'))
+            ->selectField(
+                (new Query('nodes'))
+                    ->setSelectionSet(self::fields())
+            )->getQuery();
     }
 }

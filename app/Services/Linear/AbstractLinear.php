@@ -3,6 +3,8 @@
 namespace App\Services\Linear;
 
 use App\Services\Linear\LinearApiGateway as Client;
+use GraphQL\Query;
+use GraphQL\QueryBuilder\QueryBuilderInterface;
 use Illuminate\Support\Collection;
 
 class AbstractLinear
@@ -13,32 +15,26 @@ class AbstractLinear
     {
     }
 
-    protected function query(string $data): Collection
+    protected function query(Query|QueryBuilderInterface $gql): Collection
     {
-        return Collection::wrap(
-            $this->client
+        return collect(
+            $this
+                ->client
                 ->getClient()
-                ->post('', [
-                    'query' => $data,
-                ])
-                ->throw()
-                ->json()
-        )
-            ->pipe(fn($data) => collect($data['data'] ?? []));
+                ->runQuery($gql)
+                ->getData()
+        );
     }
 
-    protected function mutate(string $data): Collection
+    protected function mutate(Query|QueryBuilderInterface $gql): Collection
     {
-        return Collection::wrap(
-            $this->client
+        return collect(
+            $this
+                ->client
                 ->getClient()
-                ->post('', [
-                    'query' => $data,
-                ])
-                ->throw()
-                ->json()
-        )
-            ->pipe(fn($data) => collect($data['data'] ?? []));
+                ->runQuery($gql)
+                ->getData()
+        );
     }
 
     /**
@@ -56,10 +52,10 @@ class AbstractLinear
         return $self;
     }
 
-    public function getWith()
+    public function getWith(): array
     {
         return collect($this->relations)
-            ->map(fn($relation) => $relation::fields())
-            ->join(PHP_EOL);
+            ->map(fn($relation) => $relation::relation())
+            ->toArray();
     }
 }
