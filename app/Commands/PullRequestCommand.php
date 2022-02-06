@@ -105,17 +105,20 @@ class PullRequestCommand extends Command
         }
 
         $activeCycle = app(LinearApiGateway::class)->cycle()->with(Issue::class)->active();
-
-        $menu = $this->menu(sprintf(
-            "%s - Select an issue for PR",
-            $activeCycle->name ?? 'Cycle' . $activeCycle->number
-        ));
+        if(!$activeCycle) {
+            $backlog = app(LinearApiGateway::class)->issues()->backlog();
+            $unstartedIssues = app(LinearApiGateway::class)->issues()->unstarted();
+            $issues = $backlog->merge($unstartedIssues);
+        } else {
+            $issues = $activeCycle->issues;
+        }
 
         $triageIssues = $this->linear()->issues()->triage();
 
-        $issues = $activeCycle->issues->merge($triageIssues);
+        $issues = $issues->merge($triageIssues);
         $states = $issues->groupBy('state');
 
+        $menu = $this->menu("Select an issue for PR");
         $states->each(
             fn($stateIssues, $state) => $menu->addSubMenu(
                 $state,

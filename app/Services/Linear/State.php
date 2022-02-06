@@ -2,26 +2,24 @@
 
 namespace App\Services\Linear;
 
-use App\DataTransferObjects\NewLinearIssueDto;
-use App\Entities\LinearIssue;
+use GraphQL\QueryBuilder\QueryBuilder;
 
 class State extends AbstractLinear
 {
 
     public function all()
     {
-        $query = <<<GQL
-            query {
-              workflowStates {
-                    nodes {
-                      id
-                      name
-                    }
-                  }
-            }
-        GQL;
+        $teamId = config('linear.settings.teamId');
+        $gql =
+                (new QueryBuilder('workflowStates'))
+                    ->selectField(
+                        (new QueryBuilder('nodes'))
+                            ->selectField('id')
+                            ->selectField('name')
+                            ->selectField('type')
+                    );
 
-        return $this->query($query)
+        return $this->query($gql)
             ->dd();
     }
 

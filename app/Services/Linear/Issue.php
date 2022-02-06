@@ -118,6 +118,58 @@ class Issue extends AbstractLinear
             ->map(fn($issue) => LinearIssue::fromRequest($issue));
     }
 
+    public function unstarted()
+    {
+        $teamId = config('linear.settings.teamId');
+
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField(
+                (new Query('issues'))
+                    ->setArguments([
+                        'filter' => new RawObject('{
+                          state: { type: { eq: "unstarted" } }
+                        }'),
+                    ])
+                    ->setSelectionSet([
+                        (new Query('nodes'))
+                            ->setSelectionSet(self::fields()),
+                    ])
+            );
+
+        return $this->query($gql)
+            ->pipe(fn($response) => collect(data_get($response, 'team.issues.nodes', [])))
+            ->map(fn($issue) => LinearIssue::fromRequest($issue));
+    }
+
+    public function started()
+    {
+        $teamId = config('linear.settings.teamId');
+
+        $gql = (new QueryBuilder('team'))
+            ->setArgument('id', $teamId)
+            ->selectField('id')
+            ->selectField('name')
+            ->selectField(
+                (new Query('issues'))
+                    ->setArguments([
+                        'filter' => new RawObject('{
+                          state: { type: { eq: "started" } }
+                        }'),
+                    ])
+                    ->setSelectionSet([
+                        (new Query('nodes'))
+                            ->setSelectionSet(self::fields()),
+                    ])
+            );
+
+        return $this->query($gql)
+            ->pipe(fn($response) => collect(data_get($response, 'team.issues.nodes', [])))
+            ->map(fn($issue) => LinearIssue::fromRequest($issue));
+    }
+
     /**
      * @return LinearIssue[]|Collection
      */
@@ -177,6 +229,7 @@ class Issue extends AbstractLinear
                 ->setSelectionSet([
                     'id',
                     'name',
+                    'type'
                 ]),
             (new QueryBuilder('labels'))
                 ->selectField(

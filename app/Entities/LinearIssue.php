@@ -15,6 +15,7 @@ class LinearIssue
         public string      $branchName,
         public ?string     $description = '',
         public ?string     $state = '',
+        public ?string     $stateType = '',
         public ?Collection $labels = null,
         public ?string     $createdAt = '',
         public ?string     $archivedAt = '',
@@ -41,6 +42,7 @@ class LinearIssue
         ])->toArray());
 
         $linearIssue->state = $data->state->name ?? 'unknown';
+        $linearIssue->stateType = $data->state->type ?? 'unknown';
 
         $linearIssue->labels = collect(data_get($data, 'labels.nodes', []))
             ->map(fn($data) => LinearLabel::fromRequest($data));

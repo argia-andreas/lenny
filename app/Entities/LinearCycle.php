@@ -24,6 +24,10 @@ class LinearCycle
 
     public static function fromRequest($data)
     {
+        if(! $data) {
+            return null;
+        }
+
         $cycle = new self(
             ...collect($data)->only([
             'id',

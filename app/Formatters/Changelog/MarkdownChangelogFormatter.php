@@ -42,7 +42,7 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
             ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
             ->toArray();
@@ -52,7 +52,7 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
             ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
             ->toArray();
@@ -62,7 +62,7 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
             ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
             ->toArray();
@@ -75,7 +75,7 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
-            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
             ->toArray();
     }
