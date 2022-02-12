@@ -104,7 +104,7 @@ class InstallCommand extends Command
         $this->line('Saving template stub to: ' . $templateFile);
 
         $template = <<<'EOT'
-        # :rocket: Sprint - {{ $cycleName }}
+        # 🚀 Sprint - {{ $cycleName }}
         ---
         Date: {{ $startsAt }} - {{ $endsAt }}
         Progress: {{ $progress }}%
@@ -148,7 +148,7 @@ class InstallCommand extends Command
         $this->newLine();
 
         $template = <<<'EOT'
-        # :rocket: Cycle - {{ $cycleName }}
+        # 🚀 Cycle - {{ $cycleName }}
         ---
         Date: {{ $startsAt }} - {{ $endsAt }}
         Progress: {{ $progress }}%

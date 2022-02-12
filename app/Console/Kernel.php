@@ -96,6 +96,12 @@ class Kernel extends BaseKernel
                 throw new ProcessFailedException($hasGh);
             }
 
+            $hasClipBoardSupport = tap(new Process(['which', 'pbcopy']), fn($p) => $p->run());
+
+            if ($hasClipBoardSupport->isSuccessful()) {
+                Config::set('linear.hasClipboardSupport', true);
+            }
+
         } catch (\Throwable $e) {
             throw MissingCommandsException::create();
         }
