@@ -3,12 +3,15 @@
 namespace App\Actions\Git;
 
 use Illuminate\Support\Str;
+use Lorisleiva\Actions\Concerns\AsAction;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class GitGetCurrentBranchAction
 {
-    public static function execute(): string
+    use AsAction;
+
+    public function handle(): string
     {
         $output = tap(
             (new Process(['git', 'branch', '--show-current'])),

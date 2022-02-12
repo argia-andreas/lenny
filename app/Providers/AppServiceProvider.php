@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Exceptions\InvalidAuthException;
+use App\Services\CommandDecorator;
 use App\Services\Linear\LinearApiGateway;
 use Illuminate\Support\ServiceProvider;
+use Lorisleiva\Actions\Decorators\CommandDecorator as BaseCommandDecorator;
+use Lorisleiva\Actions\Facades\Actions;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+
+        $this->app->bind(BaseCommandDecorator::class, CommandDecorator::class);
+
         try {
             $this->app->bind(LinearApiGateway::class, function ($app) {
                 return new LinearApiGateway(
@@ -34,5 +40,10 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             throw new InvalidAuthException($e->getMessage());
         }
+
+        // Register commands from actions in multiple folders.
+        Actions::registerCommands([
+            'app/Actions/Lenny',
+        ]);
     }
 }

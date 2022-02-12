@@ -1,5 +1,8 @@
 <?php
 
+use Lorisleiva\Actions\ActionServiceProvider;
+use Wulfheart\LaravelActionsIdeHelper\LaravelActionsIdeHelperServiceProvider;
+
 return [
 
     /*
@@ -56,6 +59,8 @@ return [
     'providers' => [
         App\Providers\AppServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        ActionServiceProvider::class,
+        LaravelActionsIdeHelperServiceProvider::class,
     ],
 
 

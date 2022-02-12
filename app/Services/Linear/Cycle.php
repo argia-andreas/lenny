@@ -10,7 +10,7 @@ use GraphQL\RawObject;
 class Cycle extends AbstractLinear
 {
 
-    public function active(): LinearCycle
+    public function active(): ?LinearCycle
     {
         $teamId = config('linear.settings.teamId');
 

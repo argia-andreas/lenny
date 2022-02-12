@@ -10,14 +10,9 @@ use LaravelZero\Framework\Commands\Command;
 
 class MarkdownChangelogFormatter implements ChangelogFormatter
 {
-
-    public function __construct(protected Command $command)
+    public function format(LinearCycle $cycle): string
     {
-    }
-
-    public function format(LinearCycle $cycle): void
-    {
-        $output = view('changelog')
+        return view('changelog')
             ->with('cycleName', $this->title($cycle))
             ->with('startsAt', Carbon::parse($cycle->startsAt)->format('Y-m-d'))
             ->with('endsAt', Carbon::parse($cycle->endsAt)->format('Y-m-d'))
@@ -27,10 +22,6 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
             ->with('bugs', $this->bugs($cycle))
             ->with('tasks', $this->tasks($cycle))
             ->render();
-
-        Str::of($output)
-            ->explode(PHP_EOL)
-            ->each(fn($line) => $this->command->line($line));
     }
 
     public function title($cycle): string
@@ -42,9 +33,13 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
-            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->map(fn (LinearIssue $issue) => (object) [
+                'title' => $issue->title(),
+                'description' => $issue->description(),
+                'completed' => $issue->completed(),
+            ])
             ->toArray();
     }
 
@@ -52,9 +47,13 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
-            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->map(fn (LinearIssue $issue) => (object) [
+                'title' => $issue->title(),
+                'description' => $issue->description(),
+                'completed' => $issue->completed(),
+            ])
             ->toArray();
     }
 
@@ -62,9 +61,13 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-//            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
-            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->map(fn (LinearIssue $issue) => (object) [
+                'title' => $issue->title(),
+                'description' => $issue->description(),
+                'completed' => $issue->completed(),
+            ])
             ->toArray();
     }
 
@@ -75,8 +78,12 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
-            ->filter(fn(LinearIssue $issue) => $issue->state == 'Done')
-            ->map(fn (LinearIssue $issue) => (object) ['title' =>$issue->title(), 'description' => $issue->description()])
+            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
+            ->map(fn (LinearIssue $issue) => (object) [
+                'title' => $issue->title(),
+                'description' => $issue->description(),
+                'completed' => $issue->completed(),
+            ])
             ->toArray();
     }
 }

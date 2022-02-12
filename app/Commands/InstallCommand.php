@@ -106,6 +106,48 @@ class InstallCommand extends Command
         ---
         ## Highlights
         @foreach($highlights as $issue)
+        ### {{ $issue->title }}{{ $issue->completed ? '- Done' : '' }}
+        {{ $issue->description }}
+        @endforeach
+        @endif
+        @if($features)
+        ---
+        ## Funktioner
+        @foreach($features as $issue)
+        - [{{ $issue->completed ? 'X' : ' ' }}] {{ $issue->title }}
+        @endforeach
+        @endif
+        @if($bugs)
+        ---
+        ## Buggar
+        @foreach($bugs as $issue)
+        - [{{ $issue->completed ? 'X' : ' ' }}] {{ $issue->title }}
+        @endforeach
+        @endif
+        @if($tasks)
+        ---
+        ## Övrigt
+        @foreach($tasks as $issue)
+        - [{{ $issue->completed ? 'X' : ' ' }}] {{ $issue->title }}
+        @endforeach
+        @endif
+        EOT;
+
+        File::put($templateFile, $template);
+
+        $templateFile = base_dir() . 'cycle.blade.php';
+
+        $this->line('Saving template stub to: ' . $templateFile);
+
+        $template = <<<'EOT'
+        # :rocket: Cycle - {{ $cycleName }}
+        ---
+        Date: {{ $startsAt }} - {{ $endsAt }}
+        Progress: {{ $progress }}%
+        @if($highlights)
+        ---
+        ## Highlights
+        @foreach($highlights as $issue)
         ### {{ $issue->title }}
         {{ $issue->description }}
         @endforeach
@@ -114,21 +156,21 @@ class InstallCommand extends Command
         ---
         ## Funktioner
         @foreach($features as $issue)
-        - {{ $issue->title }}
+        - [{{ $issue->completed ? 'X' : ' ' }}] {{ $issue->title }}
         @endforeach
         @endif
         @if($bugs)
         ---
         ## Buggar
         @foreach($bugs as $issue)
-        - {{ $issue->title }}
+        - [{{ $issue->completed ? 'X' : ' ' }}] {{ $issue->title }}
         @endforeach
         @endif
         @if($tasks)
         ---
         ## Övrigt
         @foreach($tasks as $issue)
-        - {{ $issue->title }}
+        - [{{ $issue->completed ? 'X' : ' ' }}] {{ $issue->title }}
         @endforeach
         @endif
         EOT;
