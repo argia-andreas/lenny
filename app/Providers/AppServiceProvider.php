@@ -7,7 +7,6 @@ use App\Services\CommandDecorator;
 use App\Services\Linear\LinearApiGateway;
 use Illuminate\Support\ServiceProvider;
 use Lorisleiva\Actions\Decorators\CommandDecorator as BaseCommandDecorator;
-use Lorisleiva\Actions\Facades\Actions;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,9 +40,5 @@ class AppServiceProvider extends ServiceProvider
             throw new InvalidAuthException($e->getMessage());
         }
 
-        // Register commands from actions in multiple folders.
-        Actions::registerCommands([
-            'app/Actions/Lenny',
-        ]);
     }
 }

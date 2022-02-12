@@ -60,7 +60,6 @@ return [
         App\Providers\AppServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         ActionServiceProvider::class,
-        LaravelActionsIdeHelperServiceProvider::class,
     ],
 
 
