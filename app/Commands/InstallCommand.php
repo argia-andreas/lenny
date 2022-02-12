@@ -37,10 +37,15 @@ class InstallCommand extends Command
         $this->info('Go to https://linear.app/ - Account settings and set up a personal API token.');
         $this->line('Good Luck!');
         $this->newLine();
-        $this->token = $this->secret('Linear API Token:');
 
-        $this->task('Saving Linear API token', [$this, 'saveLinearApiToken']);
-        $this->task('Publishing template stuv', [$this, 'publishTemplateStub']);
+        if($this->confirm('Update linear token?', false)) {
+            $this->token = $this->secret('Linear API Token:');
+            $this->task('Saving Linear API token', [$this, 'saveLinearApiToken']);
+        }
+
+        if($this->confirm('Re-publish template stubs?', false)) {
+            $this->task('Publishing template stub', [$this, 'publishTemplateStub']);
+        }
 
         return 0;
     }
@@ -95,6 +100,7 @@ class InstallCommand extends Command
     {
         $templateFile = base_dir() . 'changelog.blade.php';
 
+        $this->newLine();
         $this->line('Saving template stub to: ' . $templateFile);
 
         $template = <<<'EOT'
@@ -137,7 +143,9 @@ class InstallCommand extends Command
 
         $templateFile = base_dir() . 'cycle.blade.php';
 
+        $this->newLine();
         $this->line('Saving template stub to: ' . $templateFile);
+        $this->newLine();
 
         $template = <<<'EOT'
         # :rocket: Cycle - {{ $cycleName }}

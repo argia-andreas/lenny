@@ -53,7 +53,7 @@ class PullRequest
 
         $pullRequestDto = new PullRequestDto(
             sprintf('%s - %s',$issue->identifier, $issue->title),
-            $issue->description
+            $issue->description ?? $issue->title
         );
 
         if (!$command->confirm(sprintf("Checkout and create PR for: %s", $issue->branchName))) {
