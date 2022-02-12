@@ -3,12 +3,15 @@
 namespace App\Actions\Git;
 
 use App\DataTransferObjects\GitPullRequestCommentDto;
+use Lorisleiva\Actions\Concerns\AsAction;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class GitPullRequestCommentAction
 {
-    public function execute(GitPullRequestCommentDto $prComment)
+    use AsAction;
+
+    public function handle(GitPullRequestCommentDto $prComment)
     {
         $process = new Process(['gh', 'pr', 'comment', "--body={$prComment->body}"]);
         $result = $process->run();

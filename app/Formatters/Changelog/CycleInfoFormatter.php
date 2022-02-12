@@ -5,14 +5,12 @@ namespace App\Formatters\Changelog;
 use App\Entities\LinearCycle;
 use App\Entities\LinearIssue;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
-use LaravelZero\Framework\Commands\Command;
 
-class MarkdownChangelogFormatter implements ChangelogFormatter
+class CycleInfoFormatter implements ChangelogFormatter
 {
     public function format(LinearCycle $cycle): string
     {
-        return view('changelog')
+        return view('cycle')
             ->with('cycleName', $this->title($cycle))
             ->with('startsAt', Carbon::parse($cycle->startsAt)->format('Y-m-d'))
             ->with('endsAt', Carbon::parse($cycle->endsAt)->format('Y-m-d'))
@@ -33,7 +31,6 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
             ->map(fn (LinearIssue $issue) => (object) [
                 'title' => $issue->title(),
@@ -47,7 +44,6 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
             ->map(fn (LinearIssue $issue) => (object) [
                 'title' => $issue->title(),
@@ -61,7 +57,6 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
     {
         return $cycle
             ->issues
-            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->filter(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
             ->map(fn (LinearIssue $issue) => (object) [
                 'title' => $issue->title(),
@@ -78,7 +73,6 @@ class MarkdownChangelogFormatter implements ChangelogFormatter
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'highlight'))
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'feature'))
             ->reject(fn(LinearIssue $issue) => $issue->labels->contains('name', 'bug'))
-            ->filter(fn(LinearIssue $issue) => $issue->stateType == 'completed')
             ->map(fn (LinearIssue $issue) => (object) [
                 'title' => $issue->title(),
                 'description' => $issue->description(),

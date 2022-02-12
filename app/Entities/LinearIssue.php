@@ -27,6 +27,11 @@ class LinearIssue
         }
     }
 
+    public function completed(): bool
+    {
+        return $this->stateType === 'completed';
+    }
+
     public static function fromRequest($data): LinearIssue
     {
         $linearIssue = new self(...collect($data)->only([

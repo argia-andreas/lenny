@@ -3,15 +3,22 @@
 namespace App\Actions\Git;
 
 use Illuminate\Support\Str;
+use Lorisleiva\Actions\Concerns\AsAction;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
 class GitRepoHasNonStagedChangesAction
 {
-    public static function execute(): string
+    use AsAction;
+
+    public function __construct(protected CheckGitRepoExistsAction $checkGitRepoExistsAction)
+    {
+    }
+
+    public function handle(): string
     {
         throw_unless(
-            CheckGitRepoExistsAction::execute(),
+            $this->checkGitRepoExistsAction->handle(),
             new \Exception('Git repo does not exist')
         );
 
@@ -26,10 +33,10 @@ class GitRepoHasNonStagedChangesAction
             }
         )->getOutput();
 
-        return static::hasNonStagedChanges($output);
+        return $this->hasNonStagedChanges($output);
     }
 
-    public static function hasNonStagedChanges($output): bool
+    public function hasNonStagedChanges($output): bool
     {
         return Str::of($output)
             ->trim()
