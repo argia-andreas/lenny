@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'hasClipboardSupport' => false,
     'auth' => [
         'key' => null,
         'token' => null,

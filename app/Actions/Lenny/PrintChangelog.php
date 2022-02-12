@@ -3,6 +3,7 @@
 namespace App\Actions\Lenny;
 
 use App\Actions\Linear\GetActiveCycle;
+use App\Actions\Support\CopyToClipBoard;
 use App\Console\Middleware\HasLinearTeamMiddleware;
 use App\Entities\LinearCycle;
 use App\Formatters\Changelog\ChangelogFormatter;
@@ -23,6 +24,10 @@ class PrintChangelog
     public array $commandMiddleware = [
         HasLinearTeamMiddleware::class,
     ];
+
+    public function __construct(protected CopyToClipBoard $copyToClipBoard)
+    {
+    }
 
     public function handle(LinearCycle $cycle, ChangelogFormatter $formatter = null): string
     {
@@ -48,5 +53,10 @@ class PrintChangelog
         Str::of($output)
             ->explode(PHP_EOL)
             ->each(fn($line) => $command->line($line));
+
+        $command->task(
+            'Changelog copied to clipboard',
+            fn() => $this->copyToClipBoard->handle($output)
+        );
     }
 }
