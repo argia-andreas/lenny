@@ -1,5 +1,14 @@
 <?php
 
+use App\Actions\Lenny\Checkout;
+use App\Actions\Lenny\PrintChangelog;
+use App\Actions\Lenny\PrintCycle;
+use App\Actions\Lenny\PullRequest;
+use App\Actions\Lenny\SetActiveTeam;
+use App\Actions\Lenny\Todo;
+use Lorisleiva\Actions\Console\MakeActionCommand;
+use Symfony\Component\Console\Command\DumpCompletionCommand;
+
 return [
 
     /*
@@ -40,7 +49,12 @@ return [
     */
 
     'add' => [
-        // ..
+        Checkout::class,
+        PrintChangelog::class,
+        PrintCycle::class,
+        PullRequest::class,
+        SetActiveTeam::class,
+        Todo::class,
     ],
 
     /*
@@ -74,7 +88,8 @@ return [
     */
 
     'remove' => [
-        // ..
+        MakeActionCommand::class,
+        DumpCompletionCommand::class,
     ],
 
 ];

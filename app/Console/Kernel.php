@@ -5,12 +5,6 @@ declare(strict_types=1);
 
 namespace App\Console;
 
-use App\Actions\Lenny\Checkout;
-use App\Actions\Lenny\PrintChangelog;
-use App\Actions\Lenny\PrintCycle;
-use App\Actions\Lenny\PullRequest;
-use App\Actions\Lenny\SetActiveTeam;
-use App\Actions\Lenny\Todo;
 use App\Exceptions\InvalidAuthException;
 use App\Exceptions\InvalidSettingsException;
 use App\Exceptions\MissingCommandsException;
@@ -24,15 +18,6 @@ use Symfony\Component\Process\Process;
 class Kernel extends BaseKernel
 {
     protected $input = null;
-
-    protected $commands = [
-        Checkout::class,
-        PrintChangelog::class,
-        PrintCycle::class,
-        PullRequest::class,
-        SetActiveTeam::class,
-        Todo::class,
-    ];
 
 
     /**

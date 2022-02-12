@@ -40,11 +40,12 @@ class LinearIssue
             'title',
             'number',
             'branchName',
-            'description',
             'createdAt',
             'archivedAt',
             'snoozedUntilAt',
         ])->toArray());
+
+        $linearIssue->description = $data->description ?? $data->title;
 
         $linearIssue->state = $data->state->name ?? 'unknown';
         $linearIssue->stateType = $data->state->type ?? 'unknown';

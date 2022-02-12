@@ -61,7 +61,7 @@ class Todo
     {
         try {
             if ($title = $command->argument('title')) {
-                return new NewLinearIssueDto($title, config('linear.settings.teamId'));
+                return new NewLinearIssueDto($title, config('linear.settings.teamId'), '');
             }
 
             $title = $command->option('title') ?: $command->ask('Issue Title');
