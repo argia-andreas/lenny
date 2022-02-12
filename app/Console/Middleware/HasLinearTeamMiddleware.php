@@ -22,7 +22,5 @@ class HasLinearTeamMiddleware implements ConsoleMiddleware
 
             $this->hasTeam($request);
         }
-
-        return;
     }
 }

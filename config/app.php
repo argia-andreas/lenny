@@ -57,6 +57,7 @@ return [
     */
 
     'providers' => [
+        App\Providers\EventServiceProvider::class,
         App\Providers\AppServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         ActionServiceProvider::class,
